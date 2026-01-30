@@ -7,6 +7,9 @@ export default function HomePage() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [darkMode, setDarkMode] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("all");
 
   useEffect(() => {
     const fetchVideos = async () => {
@@ -36,6 +39,28 @@ export default function HomePage() {
       credentials: "include",
     });
     navigate("/u/login");
+  };
+
+  // Filter videos based on search query and category
+  const filteredVideos = videos.filter((video) => {
+    const matchesSearch = 
+      video.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      video.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      video.uploader?.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      video.description?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesCategory = selectedCategory === "all" || video.category === selectedCategory;
+    
+    return matchesSearch && matchesCategory;
+  });
+
+  // Get unique categories from videos
+  const categories = ["all", ...new Set(videos.map(v => v.category).filter(Boolean))];
+
+  // Clear search
+  const clearSearch = () => {
+    setSearchQuery("");
+    setSelectedCategory("all");
   };
 
   if (loading) {
@@ -85,7 +110,8 @@ export default function HomePage() {
           transform: translate(-50%, -50%) scale(1);
         }
 
-        .video-card:hover .thumbnail-img {
+        .video-card:hover .thumbnail-img,
+        .video-card:hover .thumbnail-video {
           transform: scale(1.05);
         }
         
@@ -101,8 +127,13 @@ export default function HomePage() {
           box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
         }
         
-        .thumbnail-img {
+        .thumbnail-img,
+        .thumbnail-video {
           transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .thumbnail-video {
+          pointer-events: none;
         }
         
         .play-overlay {
@@ -184,6 +215,44 @@ export default function HomePage() {
         .theme-toggle:hover {
           transform: scale(1.05);
         }
+
+        .category-chip {
+          transition: all 0.3s ease;
+          cursor: pointer;
+        }
+
+        .category-chip:hover {
+          transform: translateY(2px);
+        }
+
+        .category-chip.active {
+          background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+          color: white;
+          box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+        }
+
+        .search-clear-btn {
+          transition: all 0.2s ease;
+        }
+
+        .search-clear-btn:hover {
+          transform: scale(1.1);
+        }
+
+        .no-results {
+          animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
       `}</style>
 
       <div style={{ 
@@ -219,10 +288,14 @@ export default function HomePage() {
                 <input
                   type="text"
                   placeholder="Search videos, creators, categories..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => setSearchFocused(true)}
+                  onBlur={() => setSearchFocused(false)}
                   style={{
                     width: '100%',
                     paddingLeft: '2.75rem',
-                    paddingRight: '1.5rem',
+                    paddingRight: searchQuery ? '2.5rem' : '1.5rem',
                     paddingTop: '0.625rem',
                     paddingBottom: '0.625rem',
                     borderRadius: '0.75rem',
@@ -231,15 +304,9 @@ export default function HomePage() {
                     color: darkMode ? '#f1f5f9' : '#0f172a',
                     fontSize: '0.875rem',
                     outline: 'none',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = '#3b82f6';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.2)';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = darkMode ? '#334155' : '#e5e7eb';
-                    e.target.style.boxShadow = 'none';
+                    transition: 'all 0.3s ease',
+                    borderColor: searchFocused ? '#3b82f6' : (darkMode ? '#334155' : '#e5e7eb'),
+                    boxShadow: searchFocused ? '0 0 0 3px rgba(59, 130, 246, 0.2)' : 'none'
                   }}
                 />
                 <svg 
@@ -251,6 +318,19 @@ export default function HomePage() {
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
+                
+                {/* Clear button */}
+                {searchQuery && (
+                  <button
+                    onClick={clearSearch}
+                    className="search-clear-btn absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-slate-700"
+                    style={{ color: darkMode ? '#94a3b8' : '#64748b' }}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
               </div>
             </div>
 
@@ -340,11 +420,76 @@ export default function HomePage() {
           </div>
         </nav>
 
+        {/* CATEGORY FILTERS */}
+        {videos.length > 0 && (
+          <section className="max-w-[1800px] mx-auto px-8 py-4">
+            <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide">
+              {categories.map((category) => (
+                <button
+                  key={category}
+                  onClick={() => setSelectedCategory(category)}
+                  className={`category-chip px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap ${
+                    selectedCategory === category ? 'active' : ''
+                  }`}
+                  style={{
+                    background: selectedCategory === category 
+                      ? undefined 
+                      : (darkMode ? '#1e293b' : 'white'),
+                    border: selectedCategory === category 
+                      ? 'none' 
+                      : `2px solid ${darkMode ? '#475569' : '#cbd5e1'}`,
+                    color: selectedCategory === category 
+                      ? 'white' 
+                      : (darkMode ? '#cbd5e1' : '#475569')
+                  }}
+                >
+                  {category === "all" ? "All Videos" : category}
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* SEARCH RESULTS INFO */}
+        {(searchQuery || selectedCategory !== "all") && (
+          <section className="max-w-[1800px] mx-auto px-8 pb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <p style={{ color: darkMode ? '#cbd5e1' : '#475569' }} className="text-sm font-medium">
+                  {filteredVideos.length === 0 
+                    ? 'No results found' 
+                    : `${filteredVideos.length} ${filteredVideos.length === 1 ? 'video' : 'videos'} found`}
+                </p>
+                {searchQuery && (
+                  <span className="px-3 py-1 rounded-full text-xs font-semibold" style={{
+                    background: darkMode ? '#1e293b' : '#f1f5f9',
+                    color: darkMode ? '#60a5fa' : '#2563eb'
+                  }}>
+                    "{searchQuery}"
+                  </span>
+                )}
+              </div>
+              {(searchQuery || selectedCategory !== "all") && (
+                <button
+                  onClick={clearSearch}
+                  className="text-sm font-medium flex items-center gap-1 hover:underline"
+                  style={{ color: darkMode ? '#60a5fa' : '#2563eb' }}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Clear filters
+                </button>
+              )}
+            </div>
+          </section>
+        )}
+
         {/* VIDEO GRID */}
         <section className="max-w-[1800px] mx-auto px-8 py-6">
-          {videos.length > 0 ? (
+          {filteredVideos.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-              {videos.map((video, index) => (
+              {filteredVideos.map((video, index) => (
                 <div
                   key={video._id}
                   onClick={() => navigate(`/video/${video._id}`)}
@@ -365,14 +510,27 @@ export default function HomePage() {
                 >
                   {/* Thumbnail */}
                   <div className="thumbnail-container relative" style={{ background: darkMode ? '#0f172a' : '#e2e8f0' }}>
-                    <img
-                      src={
-                        video.thumbnailURL ||
-                        "https://via.placeholder.com/400x225/1e293b/60a5fa?text=OMNEK"
-                      }
-                      alt={video.title}
-                      className="thumbnail-img w-full aspect-video object-cover"
-                    />
+                    {video.thumbnailURL ? (
+                      <img
+                        src={video.thumbnailURL}
+                        alt={video.title}
+                        className="thumbnail-img w-full aspect-video object-cover"
+                      />
+                    ) : video.videoURL ? (
+                      <video
+                        src={video.videoURL}
+                        className="thumbnail-video w-full aspect-video object-cover"
+                        muted
+                        playsInline
+                        preload="metadata"
+                      />
+                    ) : (
+                      <div className="w-full aspect-video flex items-center justify-center" style={{ background: darkMode ? '#0f172a' : '#e2e8f0' }}>
+                        <svg className="w-16 h-16" style={{ color: darkMode ? '#475569' : '#94a3b8' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                    )}
                     
                     {/* Play button */}
                     <div className="play-overlay">
@@ -426,30 +584,59 @@ export default function HomePage() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-24 rounded-2xl border-2 border-dashed" style={{
+            <div className="no-results text-center py-24 rounded-2xl border-2 border-dashed" style={{
               background: darkMode ? '#1e293b' : 'white',
               borderColor: darkMode ? '#475569' : '#cbd5e1'
             }}>
-              <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-blue-600 to-blue-800 rounded-full flex items-center justify-center">
-                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-semibold mb-2" style={{ color: darkMode ? '#f1f5f9' : '#0f172a' }}>
-                No videos yet
-              </h3>
-              <p className="mb-6" style={{ color: darkMode ? '#94a3b8' : '#64748b' }}>
-                Be the first to share amazing content with the community
-              </p>
-              <button
-                onClick={() => navigate("/video/upload")}
-                className="btn-primary px-6 py-3 rounded-xl text-white font-semibold inline-flex items-center gap-2"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-                </svg>
-                Upload your first video
-              </button>
+              {searchQuery || selectedCategory !== "all" ? (
+                <>
+                  <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-slate-600 to-slate-800 rounded-full flex items-center justify-center">
+                    <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2" style={{ color: darkMode ? '#f1f5f9' : '#0f172a' }}>
+                    No videos found
+                  </h3>
+                  <p className="mb-6" style={{ color: darkMode ? '#94a3b8' : '#64748b' }}>
+                    {searchQuery 
+                      ? `We couldn't find any videos matching "${searchQuery}"`
+                      : `No videos in the ${selectedCategory} category`}
+                  </p>
+                  <button
+                    onClick={clearSearch}
+                    className="btn-primary px-6 py-3 rounded-xl text-white font-semibold inline-flex items-center gap-2"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    Clear search
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-blue-600 to-blue-800 rounded-full flex items-center justify-center">
+                    <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2" style={{ color: darkMode ? '#f1f5f9' : '#0f172a' }}>
+                    No videos yet
+                  </h3>
+                  <p className="mb-6" style={{ color: darkMode ? '#94a3b8' : '#64748b' }}>
+                    Be the first to share amazing content with the community
+                  </p>
+                  <button
+                    onClick={() => navigate("/video/upload")}
+                    className="btn-primary px-6 py-3 rounded-xl text-white font-semibold inline-flex items-center gap-2"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Upload your first video
+                  </button>
+                </>
+              )}
             </div>
           )}
         </section>

@@ -5,7 +5,8 @@ const userSchema = new mongoose.Schema({
   email:{type: String, required: true, unique: true },
   username:{type:String,required:true,unique:true},
   password:{type: String, required: true },
-  profilePic:{type: String, default: "" },
+  profilePicURL: { type: String, default: null },
+  profilePicPublicId: { type: String, default: null },
   subscribers:[{type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   subscriptions:[{type: mongoose.Schema.Types.ObjectId, ref: "User" }],
 },{timestamps:true});
