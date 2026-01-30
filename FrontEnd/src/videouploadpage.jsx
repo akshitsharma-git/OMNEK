@@ -2,6 +2,8 @@ import { useState, useRef } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
+const API_BASE = import.meta.env.VITE_API_URL;
+
 export default function VideoUploadPage() {
   const [video, setVideo] = useState(null);
   const [thumbnail, setThumbnail] = useState(null);
@@ -130,7 +132,7 @@ export default function VideoUploadPage() {
       }
 
       await axios.post(
-        "http://localhost:9999/video/metaData",
+        `${API_BASE}/video/metaData`,
         {
           title,
           description,

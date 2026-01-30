@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+const API_BASE = import.meta.env.VITE_API_URL;
+
 export default function HomePage() {
   const navigate = useNavigate();
   const [videos, setVideos] = useState([]);
@@ -14,7 +16,7 @@ export default function HomePage() {
   useEffect(() => {
     const fetchVideos = async () => {
       try {
-        const res = await fetch("http://localhost:9999/", {
+        const res = await fetch(`${API_BASE}/`, {
           credentials: "include",
         });
         const data = await res.json();
@@ -34,7 +36,7 @@ export default function HomePage() {
   }, []);
 
   const handleLogout = async () => {
-    await fetch("http://localhost:9999/u/logout", {
+    await fetch(`${API_BASE}/u/logout`, {
       method: "POST",
       credentials: "include",
     });

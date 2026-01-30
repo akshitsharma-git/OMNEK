@@ -28,7 +28,7 @@ export default function ProfilePage() {
     const fetchProfileAndVideos = async () => {
       try {
         // Fetch profile
-        const profileRes = await fetch("http://localhost:9999/u/profile", {
+        const profileRes = await fetch(`${API_BASE}/u/profile`, {
           credentials: "include",
         });
         if (!profileRes.ok) throw new Error("Failed to fetch profile");
@@ -36,7 +36,7 @@ export default function ProfilePage() {
         setUser(profileData);
 
         // Fetch user's videos
-        const videosRes = await fetch("http://localhost:9999/u/videos", {
+        const videosRes = await fetch("${API_BASE}/u/videos", {
           credentials: "include",
         });
         if (!videosRes.ok) throw new Error("Failed to fetch videos");
@@ -53,7 +53,7 @@ export default function ProfilePage() {
   }, []);
 
   const handleLogout = async () => {
-    await fetch("http://localhost:9999/u/logout", {
+    await fetch(`${API_BASE}/u/logout`, {
       method: "POST",
       credentials: "include",
     });
@@ -99,7 +99,7 @@ export default function ProfilePage() {
       );
 
       // Send to backend
-      const response = await fetch("http://localhost:9999/u/profile/addPFP", {
+      const response = await fetch(`${API_BASE}/u/profile/addPFP`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -134,7 +134,7 @@ export default function ProfilePage() {
 
   const handleRemovePFP = async () => {
     try {
-      const response = await fetch("http://localhost:9999/u/profile/removePFP", {
+      const response = await fetch(`${API_BASE}/u/profile/removePFP`, {
         method: "DELETE",
         credentials: "include",
       });
@@ -185,7 +185,7 @@ export default function ProfilePage() {
   if (!doubleConfirm) return;
 
   try {
-    const response = await fetch("http://localhost:9999/u/profile/delete", {
+    const response = await fetch(`${API_BASE}/u/profile/delete`, {
       method: "DELETE",
       credentials: "include",
     });

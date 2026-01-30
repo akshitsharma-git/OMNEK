@@ -1,6 +1,8 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 
+const API_BASE = import.meta.env.VITE_API_URL;
+
 function VideoViewerPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -35,7 +37,7 @@ function VideoViewerPage() {
   };
 
   useEffect(() => {
-    fetch("http://localhost:9999/u/profile", { credentials: "include" })
+    fetch(`${API_BASE}/u/profile`, { credentials: "include" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data) setCurrentUser(data);
@@ -47,7 +49,7 @@ function VideoViewerPage() {
     async function fetchVideo() {
       try {
         setLoading(true);
-        const res = await fetch(`http://localhost:9999/video/${id}`, {
+        const res = await fetch(`${API_BASE}/video/${id}`, {
           credentials: "include",
         });
         if (!res.ok) {
@@ -268,7 +270,7 @@ function VideoViewerPage() {
 
   async function handleVideoDelete() {
     try {
-      const res = await fetch(`http://localhost:9999/video/${id}`, {
+      const res = await fetch(`${API_BASE}/video/${id}`, {
         method: "DELETE",
         credentials: "include",
       });
@@ -292,7 +294,7 @@ function VideoViewerPage() {
     }
 
     try {
-      const res = await fetch(`http://localhost:9999/video/${id}/like`, {
+      const res = await fetch(`${API_BASE}/video/${id}/like`, {
         method: "POST",
         credentials: "include",
       });
@@ -317,7 +319,7 @@ function VideoViewerPage() {
     }
 
     try {
-      const res = await fetch(`http://localhost:9999/video/${id}/dislike`, {
+      const res = await fetch(`${API_BASE}/video/${id}/dislike`, {
         method: "POST",
         credentials: "include",
       });
@@ -343,7 +345,7 @@ function VideoViewerPage() {
 
     try {
       const res = await fetch(
-        `http://localhost:9999/video/${video.uploader._id}/subscribe`,
+        `${API_BASE}/video/${video.uploader._id}/subscribe`,
         {
           method: "POST",
           credentials: "include",
