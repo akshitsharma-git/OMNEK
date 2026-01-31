@@ -4,6 +4,8 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import cloudinary from "../services/cloudinary.js";
 
+const isProd = process.env.NODE_ENV === "production";
+
 async function handleCreateUser(req, res) {
   const { fullName, email, password, username } = req.body;
   if (!fullName || !email || !password || !username) {
@@ -40,7 +42,10 @@ async function handleVerifyUser(req, res) {
   const { email, password, username } = req.body;
   try {
     const user = await User.findOne({
-      $or: [{ email: email?.toLowerCase() }, { username: username?.toLowerCase() }],
+      $or: [
+        { email: email?.toLowerCase() },
+        { username: username?.toLowerCase() },
+      ],
     });
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
@@ -55,14 +60,14 @@ async function handleVerifyUser(req, res) {
         username: user.username,
       },
       process.env.SECRET_KEY,
-      { expiresIn: "1d" }
+      { expiresIn: "1d" },
     );
 
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 3600000,
-      sameSite: "strict",
+      secure: isProd,
+      sameSite: isProd ? "none" : "lax",
+      maxAge: 60 * 60 * 1000,
     });
 
     return res.status(200).json({ message: "Login Successful!!", token });
@@ -145,12 +150,12 @@ async function handleUserPFP(req, res) {
       try {
         await cloudinary.uploader.destroy(currentUser.profilePicPublicId);
         console.log(
-          `Deleted old image from Cloudinary: ${currentUser.profilePicPublicId}`
+          `Deleted old image from Cloudinary: ${currentUser.profilePicPublicId}`,
         );
       } catch (cloudinaryError) {
         console.error(
           "Error deleting old image from Cloudinary:",
-          cloudinaryError
+          cloudinaryError,
         );
         // Continue with upload even if deletion fails
       }
@@ -163,7 +168,7 @@ async function handleUserPFP(req, res) {
         profilePicURL,
         profilePicPublicId,
       },
-      { new: true }
+      { new: true },
     ).select("-password");
 
     return res.status(200).json({
@@ -195,7 +200,9 @@ async function handleRemoveUserPFP(req, res) {
     if (user.profilePicPublicId) {
       try {
         await cloudinary.uploader.destroy(user.profilePicPublicId);
-        console.log(`Deleted image from Cloudinary: ${user.profilePicPublicId}`);
+        console.log(
+          `Deleted image from Cloudinary: ${user.profilePicPublicId}`,
+        );
       } catch (cloudinaryError) {
         console.error("Error deleting from Cloudinary:", cloudinaryError);
         // Continue with database deletion even if Cloudinary deletion fails
@@ -277,14 +284,14 @@ async function handleDeleteUser(req, res) {
     // 6. Remove user from other users' subscribers arrays
     await User.updateMany(
       { subscribers: userId },
-      { $pull: { subscribers: userId } }
+      { $pull: { subscribers: userId } },
     );
     console.log("Removed user from subscribers lists");
 
     // 7. Remove user from other users' subscriptions arrays
     await User.updateMany(
       { subscriptions: userId },
-      { $pull: { subscriptions: userId } }
+      { $pull: { subscriptions: userId } },
     );
     console.log("Removed user from subscriptions lists");
 

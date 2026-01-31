@@ -3,10 +3,9 @@ import User from "../models/user.models.js";
 import cloudinary from "../services/cloudinary.js";
 import mongoose from "mongoose";
 
-
+const isProd = process.env.NODE_ENV === "production";
 
 async function handleSaveMetaData(req, res) {
-  
   try {
     if (!req.user) {
       return res.status(401).json({ message: "Not authenticated!" });
@@ -22,14 +21,12 @@ async function handleSaveMetaData(req, res) {
       thumbnailPublicId,
     } = req.body;
 
-    
     if (!title || !videoURL || !videoPublicId) {
       return res.status(400).json({
         message: "Title, videoURL and videoPublicId are required",
       });
     }
 
-    
     const newVideo = await Video.create({
       title,
       description,
@@ -54,9 +51,6 @@ async function handleSaveMetaData(req, res) {
   }
 }
 
-
-
-
 async function handleBringVideo(req, res) {
   const { id } = req.params;
 
@@ -72,18 +66,20 @@ async function handleBringVideo(req, res) {
     if (alreadyViewed) {
       video = await Video.findById(id).populate(
         "uploader",
-        "fullname subscribers username"
+        "fullname subscribers username",
       );
     } else {
       video = await Video.findByIdAndUpdate(
         id,
         { $inc: { views: 1 } },
-        { new: true }
+        { new: true },
       ).populate("uploader", "username subscribers fullName");
 
       res.cookie(cookieKey, "1", {
         maxAge: 1000 * 60 * 60 * 6,
-        sameSite: "lax",
+        httpOnly: true,
+        secure: isProd, 
+        sameSite: isProd ? "none" : "lax",
       });
     }
 
@@ -96,11 +92,10 @@ async function handleBringVideo(req, res) {
     let isSubscribed = false;
     if (req.user) {
       isSubscribed = uploader?.subscribers?.some(
-        (id) => req.user && id.toString() === req.user.id
+        (id) => req.user && id.toString() === req.user.id,
       );
     }
 
-    
     res.json({
       video: {
         ...video.toObject(),
@@ -166,7 +161,7 @@ async function handleLikeVideo(req, res) {
     if (!video) return res.status(404).json({ message: "Video not found" });
 
     video.dislikes = video.dislikes.filter(
-      (uid) => uid.toString() !== req.user.id
+      (uid) => uid.toString() !== req.user.id,
     );
 
     if (!video.likes.includes(req.user.id)) {
@@ -229,11 +224,9 @@ async function handleToggleSubscribe(req, res) {
     const isSubscribed = channel.subscribers.includes(userId);
 
     if (isSubscribed) {
-      
       channel.subscribers.pull(userId);
       currentUser.subscriptions.pull(channelId);
     } else {
-      
       channel.subscribers.push(userId);
       currentUser.subscriptions.push(channelId);
     }
@@ -260,5 +253,5 @@ export {
   handleLikeVideo,
   handleDislikeVideo,
   handleToggleSubscribe,
-  handleSaveMetaData
+  handleSaveMetaData,
 };
