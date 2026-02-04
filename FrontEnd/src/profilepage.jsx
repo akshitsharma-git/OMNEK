@@ -33,7 +33,7 @@ export default function ProfilePage() {
         const profileRes = await fetch(`${API_BASE}/u/profile`, {
           credentials: "include",
         });
-        if (!profileRes.ok) throw new Error("Failed to fetch profile");
+        if (!profileRes.ok) throw new Error("Failed to fetch profile. Please Login");
         const profileData = await profileRes.json();
         setUser(profileData);
 

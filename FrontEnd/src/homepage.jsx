@@ -40,7 +40,7 @@ export default function HomePage() {
       method: "POST",
       credentials: "include",
     });
-    navigate("/u/login");
+    navigate("/u/login", { replace: true });
   };
 
   // Filter videos based on search query and category
