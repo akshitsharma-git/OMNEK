@@ -38,7 +38,7 @@ export default function ProfilePage() {
         setUser(profileData);
 
         // Fetch user's videos
-        const videosRes = await fetch("${API_BASE}/u/videos", {
+        const videosRes = await fetch(`${API_BASE}/u/videos`, {
           credentials: "include",
         });
         if (!videosRes.ok) throw new Error("Failed to fetch videos");
