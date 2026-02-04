@@ -97,7 +97,7 @@ export default function ProfilePage() {
 
       const cloudinaryRes = await axios.post(
         "https://api.cloudinary.com/v1_1/dv4hrlvk8/image/upload",
-        formData
+        formData,
       );
 
       // Send to backend
@@ -163,50 +163,49 @@ export default function ProfilePage() {
     }
   };
 
-
   const handleDeleteAccount = async () => {
-  // Show confirmation dialog
-  const confirmed = window.confirm(
-    "⚠️ Are you sure you want to delete your account?\n\n" +
-    "This will permanently delete:\n" +
-    "• Your profile and all personal information\n" +
-    "• All your uploaded videos\n" +
-    "• All your comments and interactions\n\n" +
-    "This action CANNOT be undone!"
-  );
+    // Show confirmation dialog
+    const confirmed = window.confirm(
+      "⚠️ Are you sure you want to delete your account?\n\n" +
+        "This will permanently delete:\n" +
+        "• Your profile and all personal information\n" +
+        "• All your uploaded videos\n" +
+        "• All your comments and interactions\n\n" +
+        "This action CANNOT be undone!",
+    );
 
-  if (!confirmed) return;
+    if (!confirmed) return;
 
-  // Double confirmation
-  const doubleConfirm = window.confirm(
-    "🚨 FINAL WARNING!\n\n" +
-    "This is your last chance to cancel.\n" +
-    "Are you ABSOLUTELY sure you want to delete your account forever?"
-  );
+    // Double confirmation
+    const doubleConfirm = window.confirm(
+      "🚨 FINAL WARNING!\n\n" +
+        "This is your last chance to cancel.\n" +
+        "Are you ABSOLUTELY sure you want to delete your account forever?",
+    );
 
-  if (!doubleConfirm) return;
+    if (!doubleConfirm) return;
 
-  try {
-    const response = await fetch(`${API_BASE}/u/profile/delete`, {
-      method: "DELETE",
-      credentials: "include",
-    });
+    try {
+      const response = await fetch(`${API_BASE}/u/profile/delete`, {
+        method: "DELETE",
+        credentials: "include",
+      });
 
-    if (!response.ok) {
-      throw new Error("Failed to delete account");
+      if (!response.ok) {
+        throw new Error("Failed to delete account");
+      }
+
+      showToast("Account deleted successfully", "success");
+
+      // Redirect to login page after 2 seconds
+      setTimeout(() => {
+        navigate("/u/login");
+      }, 2000);
+    } catch (err) {
+      console.error("Error deleting account:", err);
+      showToast("Failed to delete account. Please try again.", "error");
     }
-
-    showToast("Account deleted successfully", "success");
-    
-    // Redirect to login page after 2 seconds
-    setTimeout(() => {
-      navigate("/u/login");
-    }, 2000);
-  } catch (err) {
-    console.error("Error deleting account:", err);
-    showToast("Failed to delete account. Please try again.", "error");
-  }
-};  
+  };
 
   if (loading) {
     return (
@@ -288,6 +287,11 @@ export default function ProfilePage() {
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
           transition: all 0.3s ease;
         }
+
+        .thumbnail-video {
+          pointer-events: none;
+        }
+
 
         .video-card:hover .thumbnail-container {
           box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
@@ -793,7 +797,7 @@ export default function ProfilePage() {
             <div className="flex flex-col md:flex-row items-center gap-8">
               {/* Profile Avatar with Upload */}
               <div className="relative">
-                <div 
+                <div
                   className="profile-pic-container"
                   onClick={() => {
                     // Only trigger file input if user doesn't have a profile pic
@@ -820,10 +824,13 @@ export default function ProfilePage() {
                   )}
 
                   {/* Camera Icon Overlay - Shows on hover */}
-                  <div className="pfp-overlay" onClick={(e) => {
-                    e.stopPropagation();
-                    pfpInputRef.current.click();
-                  }}>
+                  <div
+                    className="pfp-overlay"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      pfpInputRef.current.click();
+                    }}
+                  >
                     <svg
                       className="w-10 h-10 text-white"
                       fill="none"
@@ -881,10 +888,10 @@ export default function ProfilePage() {
                 />
 
                 {/* Green Active Dot - Always visible */}
-                <div 
-                  className="absolute bottom-0 right-0 w-10 h-10 bg-green-500 rounded-full border-4 pointer-events-none" 
+                <div
+                  className="absolute bottom-0 right-0 w-10 h-10 bg-green-500 rounded-full border-4 pointer-events-none"
                   style={{
-                    borderColor: darkMode ? '#1e293b' : 'white'
+                    borderColor: darkMode ? "#1e293b" : "white",
                   }}
                 ></div>
               </div>
@@ -1064,14 +1071,45 @@ export default function ProfilePage() {
                         className="thumbnail-container relative"
                         style={{ background: darkMode ? "#0f172a" : "#e2e8f0" }}
                       >
-                        <img
-                          src={
-                            video.thumbnailURL ||
-                            "https://via.placeholder.com/400x225/1e293b/60a5fa?text=OMNEK"
-                          }
-                          alt={video.title}
-                          className="thumbnail-img w-full aspect-video object-cover"
-                        />
+                        {video.thumbnailURL ? (
+                          <img
+                            src={video.thumbnailURL}
+                            alt={video.title}
+                            className="thumbnail-img w-full aspect-video object-cover"
+                          />
+                        ) : video.videoURL ? (
+                          <video
+                            src={video.videoURL}
+                            className="thumbnail-video w-full aspect-video object-cover"
+                            muted
+                            playsInline
+                            preload="metadata"
+                          />
+                        ) : (
+                          <div
+                            className="w-full aspect-video flex items-center justify-center"
+                            style={{
+                              background: darkMode ? "#0f172a" : "#e2e8f0",
+                            }}
+                          >
+                            <svg
+                              className="w-16 h-16"
+                              style={{
+                                color: darkMode ? "#475569" : "#94a3b8",
+                              }}
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                              />
+                            </svg>
+                          </div>
+                        )}
 
                         <div className="play-overlay">
                           <div className="bg-white/95 backdrop-blur-sm rounded-full p-3 shadow-2xl">
@@ -1379,25 +1417,39 @@ export default function ProfilePage() {
                     borderColor: darkMode ? "#334155" : "#e5e7eb",
                   }}
                 >
-                  <button 
-  onClick={handleDeleteAccount}
-  className="w-full px-6 py-3 rounded-xl font-semibold transition-all flex items-center justify-center gap-2" 
-  style={{
-    background: darkMode ? "#dc2626" : "#ef4444",
-    color: "white",
-  }}
-  onMouseEnter={(e) => {
-    e.currentTarget.style.background = darkMode ? "#b91c1c" : "#dc2626";
-  }}
-  onMouseLeave={(e) => {
-    e.currentTarget.style.background = darkMode ? "#dc2626" : "#ef4444";
-  }}
->
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-  </svg>
-  Delete Account
-</button>
+                  <button
+                    onClick={handleDeleteAccount}
+                    className="w-full px-6 py-3 rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
+                    style={{
+                      background: darkMode ? "#dc2626" : "#ef4444",
+                      color: "white",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = darkMode
+                        ? "#b91c1c"
+                        : "#dc2626";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = darkMode
+                        ? "#dc2626"
+                        : "#ef4444";
+                    }}
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                      />
+                    </svg>
+                    Delete Account
+                  </button>
                 </div>
               </div>
             </div>
